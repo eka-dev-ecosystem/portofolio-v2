@@ -1,3 +1,10 @@
+## [1.18.1](https://github.com/exa-dev-portfolio/portofolio-v2/compare/v1.18.0...v1.18.1) (2026-11-05)
+
+
+### Bug Fixes
+
+* **dashboard:** integrate axios plugin for tech radar and analytics to ensure automatic token refresh ([aebe496](https://github.com/exa-dev-portfolio/portofolio-v2/commit/aebe496006d357b4edbda1f4e1431b7e17aaee52))
+
 # [1.18.0](https://github.com/exa-dev-portfolio/portofolio-v2/compare/v1.17.0...v1.18.0) (2026-10-30)
 
 
