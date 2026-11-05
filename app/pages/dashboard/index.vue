@@ -10,6 +10,7 @@ definePageMeta({
 })
 
 const userName = ref('Admin')
+const { $axios } = useNuxtApp()
 const { fetchStats } = useDashboardStats()
 const { fetchProjects } = useProject()
 
@@ -39,10 +40,20 @@ const { data: statsData } = await useAsyncData(
   async () => await fetchStats()
 )
 
-const { data: techRadarData } = await useFetch<any>('/api/dashboard/tech-radar', {
-  query: { limit: 3 },
-  watch: false,
-})
+const { data: techRadarData } = await useAsyncData(
+  'dashboard-tech-radar',
+  async () => {
+    try {
+      const res = await $axios.get<BaseResponse<any>>('/api/dashboard/tech-radar', {
+        params: { limit: 3 },
+      })
+      return res.data
+    } catch (e) {
+      console.error('Failed to fetch tech radar on dashboard:', e)
+      return null
+    }
+  }
+)
 
 // Extract data from responses
 const projects = computed(() => {

@@ -16,6 +16,8 @@ definePageMeta({
   ],
 })
 
+const { $axios } = useNuxtApp()
+
 // Current Date formatted (e.g., "Tuesday, 27 October 2026")
 const currentDateStr = computed(() => {
   return new Date().toLocaleDateString('id-ID', {
@@ -81,15 +83,13 @@ const fetchRadar = async (force = false) => {
     }
     if (force) queryParams.force_refresh = 'true'
 
-    const res: any = await $fetch('/api/dashboard/tech-radar', {
-      method: 'GET',
-      query: queryParams,
-      credentials: 'include',
+    const res = await $axios.get<BaseResponse<TechRadarResponseData>>('/api/dashboard/tech-radar', {
+      params: queryParams,
     })
 
-    if (res?.data) {
-      items.value = res.data.items || []
-      stats.value = res.data.stats || stats.value
+    if (res?.data?.data) {
+      items.value = res.data.data.items || []
+      stats.value = res.data.data.stats || stats.value
     }
   } catch (error: any) {
     console.error('Failed to fetch Tech Radar feed:', error)
@@ -104,13 +104,11 @@ const fetchRadar = async (force = false) => {
 const fetchBriefing = async (force = false) => {
   isBriefingLoading.value = true
   try {
-    const res: any = await $fetch('/api/dashboard/tech-radar/briefing', {
-      method: 'POST',
-      body: { force },
-      credentials: 'include',
+    const res = await $axios.post<BaseResponse<DailyBriefingResponse>>('/api/dashboard/tech-radar/briefing', {
+      force,
     })
-    if (res?.data) {
-      briefing.value = res.data
+    if (res?.data?.data) {
+      briefing.value = res.data.data
     }
   } catch (error) {
     console.error('Failed to fetch AI briefing:', error)
@@ -127,18 +125,14 @@ const handleArticleClick = async (item: TechNewsItem) => {
     if (stats.value.unread > 0) stats.value.unread--
 
     try {
-      await $fetch('/api/dashboard/tech-radar/read', {
-        method: 'POST',
-        body: {
-          article_id: item.id,
-          title: item.title,
-          url: item.url,
-          source: item.source,
-          category: item.category,
-          author: item.author,
-          published_at: item.published_at,
-        },
-        credentials: 'include',
+      await $axios.post('/api/dashboard/tech-radar/read', {
+        article_id: item.id,
+        title: item.title,
+        url: item.url,
+        source: item.source,
+        category: item.category,
+        author: item.author,
+        published_at: item.published_at,
       })
     } catch (err) {
       console.error('Failed to mark article as read in DB:', err)
@@ -167,22 +161,18 @@ const handleToggleBookmark = async (item: TechNewsItem, event?: Event) => {
   }
 
   try {
-    const res: any = await $fetch('/api/dashboard/tech-radar/bookmark', {
-      method: 'POST',
-      body: {
-        article_id: item.id,
-        title: item.title,
-        url: item.url,
-        source: item.source,
-        category: item.category,
-        author: item.author,
-        published_at: item.published_at,
-      },
-      credentials: 'include',
+    const res = await $axios.post<BaseResponse<{ is_bookmarked: boolean }>>('/api/dashboard/tech-radar/bookmark', {
+      article_id: item.id,
+      title: item.title,
+      url: item.url,
+      source: item.source,
+      category: item.category,
+      author: item.author,
+      published_at: item.published_at,
     })
 
-    if (res?.data?.is_bookmarked !== undefined) {
-      item.is_bookmarked = res.data.is_bookmarked
+    if (res?.data?.data?.is_bookmarked !== undefined) {
+      item.is_bookmarked = res.data.data.is_bookmarked
     }
   } catch (err) {
     // revert on error

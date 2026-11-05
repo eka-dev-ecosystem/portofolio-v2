@@ -12,10 +12,20 @@ const isHoveringChart = ref(false);
 const activeHoverIndex = ref<number | null>(null);
 const selectedIndex = ref<number | null>(null);
 
-const { data: analyticsRes, pending, refresh } = await useFetch<any>('/api/dashboard/analytics', {
-  query: computed(() => ({ range: timeRange.value })),
-  watch: [timeRange],
-});
+const { $axios } = useNuxtApp();
+
+const { data: analyticsRes, pending, refresh } = await useAsyncData(
+  'dashboard-analytics',
+  async () => {
+    const res = await $axios.get<BaseResponse<any>>('/api/dashboard/analytics', {
+      params: { range: timeRange.value },
+    });
+    return res.data;
+  },
+  {
+    watch: [timeRange],
+  }
+);
 
 const analytics = computed(() => analyticsRes.value?.data || null);
 
