@@ -191,9 +191,9 @@
               </div>
 
               <!-- Platform Badges -->
-              <div class="flex flex-wrap items-center gap-1 pt-2">
+              <div v-if="app.supported_platforms && app.supported_platforms.length > 0" class="flex flex-wrap items-center gap-1 pt-2">
                 <span
-                  v-for="plat in (app.supported_platforms || ['android'])"
+                  v-for="plat in app.supported_platforms"
                   :key="plat"
                   class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/[0.03] border border-white/5 text-[10px] font-mono text-zinc-400 uppercase"
                 >
@@ -246,13 +246,19 @@
             </div>
           </div>
           <a
-            v-else
-            :href="`/api/v1/apps/${app.package_name}/download?platform=${(app.supported_platforms && app.supported_platforms[0]) || 'android'}`"
+            v-else-if="app.supported_platforms && app.supported_platforms.length === 1"
+            :href="`/api/v1/apps/${app.package_name}/download?platform=${app.supported_platforms[0]}`"
             class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white text-black font-semibold text-xs sm:text-sm shadow-md hover:bg-zinc-200 transition-colors cursor-pointer"
           >
-            <PlatformIcon :platform="(app.supported_platforms && app.supported_platforms[0]) || 'android'" class="w-4 h-4 shrink-0" />
-            <span>{{ getDownloadButtonLabel((app.supported_platforms && app.supported_platforms[0]) || 'android') }}</span>
+            <PlatformIcon :platform="app.supported_platforms[0]" class="w-4 h-4 shrink-0" />
+            <span>{{ getDownloadButtonLabel(app.supported_platforms[0]) }}</span>
           </a>
+          <div
+            v-else-if="!getAppStoreActions(app).length"
+            class="w-full py-2.5 text-center text-xs text-zinc-500 font-mono border border-dashed border-white/10 rounded-xl"
+          >
+            No build available yet
+          </div>
 
           <!-- Official Store or Testing Actions -->
           <div
@@ -287,14 +293,23 @@
             </template>
           </div>
 
-          <!-- Secondary Actions: QR Code & Changelog Details -->
+          <!-- Secondary Actions: QR Code (mobile) / Copy Link (desktop) & Changelog Details -->
           <div class="grid grid-cols-2 gap-2">
             <button
+              v-if="isMobileApp(app)"
               @click="openQrModal(app)"
               class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white text-xs font-mono border border-white/10 transition-colors cursor-pointer"
             >
               <Icon name="carbon:qr-code" size="14" class="text-zinc-400" />
               <span>Scan QR</span>
+            </button>
+            <button
+              v-else
+              @click="copyUrl(getFullDownloadUrl(app))"
+              class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white text-xs font-mono border border-white/10 transition-colors cursor-pointer"
+            >
+              <Icon :name="copied ? 'carbon:checkmark' : 'carbon:copy'" size="14" class="text-zinc-400" />
+              <span>{{ copied ? 'Copied' : 'Copy Link' }}</span>
             </button>
             <button
               @click="openDetailModal(app)"
@@ -410,25 +425,27 @@
             class="flex items-center gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs"
           >
             <Icon name="carbon:warning-alt" size="16" class="shrink-0 text-amber-400" />
-            <span>This build is currently in <strong>Development / Testing</strong> status. You can download and test this APK directly on your device.</span>
+            <span>This build is currently in <strong>Development / Testing</strong> status. You can download and test this {{ (selectedAppDetail.supported_platforms?.length === 1 && selectedAppDetail.supported_platforms[0] === 'android') ? 'APK' : 'application' }} directly on your device.</span>
           </div>
 
           <!-- Multi-version Switcher -->
           <div v-if="selectedAppDetail.releases && selectedAppDetail.releases.length > 1">
-            <h4 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2 font-mono">Available Versions</h4>
+            <h4 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2 font-mono">Available Versions & Platforms</h4>
             <div class="flex items-center gap-2 overflow-x-auto pb-1">
               <button
                 v-for="(rel, idx) in selectedAppDetail.releases"
                 :key="rel.id || idx"
                 @click="selectedReleaseIndex = idx"
                 :class="[
-                  'px-3 py-1.5 rounded-xl text-xs font-mono font-medium transition-all shrink-0 cursor-pointer',
+                  'px-3 py-1.5 rounded-xl text-xs font-mono font-medium transition-all shrink-0 cursor-pointer flex items-center gap-1.5',
                   selectedReleaseIndex === idx
                     ? 'bg-white text-black font-semibold shadow-sm'
                     : 'bg-white/[0.04] text-zinc-400 hover:text-white border border-white/10'
                 ]"
               >
-                v{{ rel.version_name || rel.tag_name }}
+                <PlatformIcon v-if="rel.platform" :platform="rel.platform" class="w-3 h-3 shrink-0" />
+                <span>v{{ rel.version_name || rel.tag_name }}</span>
+                <span v-if="rel.platform" class="text-[10px] opacity-75 uppercase">({{ rel.platform }})</span>
                 <span v-if="idx === 0" class="ml-1 text-[10px] opacity-75 font-sans">(latest)</span>
               </button>
             </div>
@@ -554,7 +571,7 @@
               <span>Beta Pass (14d)</span>
             </button>
             <a
-              v-for="plat in (selectedAppDetail.supported_platforms || ['android'])"
+              v-for="plat in (selectedAppDetail.supported_platforms || [])"
               :key="plat"
               :href="`/api/v1/apps/${selectedAppDetail.package_name}/download?platform=${plat}`"
               class="px-4 py-2 rounded-xl bg-white text-black font-semibold text-xs shadow-md hover:bg-zinc-200 transition-colors flex items-center gap-2 cursor-pointer"
@@ -987,7 +1004,7 @@ const filteredApps = computed(() => {
   }
   if (selectedPlatformFilter.value !== "all") {
     list = list.filter((app: any) => {
-      const plats = app.supported_platforms || ["android"];
+      const plats = app.supported_platforms || [];
       return plats.includes(selectedPlatformFilter.value);
     });
   }
@@ -1089,10 +1106,26 @@ interface AppStoreAction {
   class: string;
 }
 
+const isMobileApp = (app: any): boolean => {
+  if (!app) return false;
+  const plats = app.supported_platforms || [];
+  return (
+    plats.includes("android") ||
+    plats.includes("ios") ||
+    Boolean(
+      app.play_store_url ||
+      app.app_store_url ||
+      app.testflight_url ||
+      app.apple_beta_group_id ||
+      app.google_tester_group_email
+    )
+  );
+};
+
 const getAppStoreActions = (app: any): AppStoreAction[] => {
   if (!app) return [];
   const actions: AppStoreAction[] = [];
-  const platforms = app.supported_platforms || ["android"];
+  const platforms = app.supported_platforms || [];
   const supportsAndroid = platforms.includes("android");
   const supportsIos = platforms.includes("ios") || Boolean(app.app_store_url || app.testflight_url || app.apple_beta_group_id);
 
@@ -1159,7 +1192,7 @@ const getAppStoreActions = (app: any): AppStoreAction[] => {
 
 const hasStoreBeta = (app: any) => {
   if (!app) return false;
-  const platforms = app.supported_platforms || ["android"];
+  const platforms = app.supported_platforms || [];
   const hasAndroid = platforms.includes("android");
   const hasIos = platforms.includes("ios") || Boolean(app.app_store_url || app.testflight_url || app.apple_beta_group_id);
 

@@ -150,7 +150,7 @@ export const upsertApp = async (
       repo_id, package_name, app_name, description, icon_url,
       latest_version_code, latest_version_name, supported_platforms, updated_at
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, ARRAY['android']::text[]), current_timestamp)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, ARRAY[]::text[]), current_timestamp)
     ON CONFLICT (package_name) DO UPDATE SET
       repo_id = EXCLUDED.repo_id,
       app_name = EXCLUDED.app_name,
@@ -164,7 +164,7 @@ export const upsertApp = async (
       END,
       supported_platforms = CASE
         WHEN EXCLUDED.supported_platforms IS NOT NULL AND array_length(EXCLUDED.supported_platforms, 1) > 0
-        THEN (SELECT array_agg(DISTINCT p) FROM unnest(array_cat(apk_apps.supported_platforms, EXCLUDED.supported_platforms)) AS p)
+        THEN EXCLUDED.supported_platforms
         ELSE apk_apps.supported_platforms
       END,
       updated_at = current_timestamp
@@ -191,9 +191,9 @@ export const getAppByPackageName = async (
   const sql = `
     SELECT a.*, r.repo_slug,
       COALESCE(
-        (SELECT array_agg(DISTINCT rel.platform) FROM apk_releases rel WHERE rel.app_id = a.id),
+        (SELECT array_agg(DISTINCT rel.platform) FROM apk_releases rel WHERE rel.app_id = a.id AND rel.platform IS NOT NULL AND rel.platform != 'unknown'),
         a.supported_platforms,
-        ARRAY['android']::text[]
+        ARRAY[]::text[]
       ) AS supported_platforms
     FROM apk_apps a
     JOIN apk_repositories r ON r.id = a.repo_id
@@ -210,9 +210,9 @@ export const getAppById = async (
   const sql = `
     SELECT a.*, r.repo_slug,
       COALESCE(
-        (SELECT array_agg(DISTINCT rel.platform) FROM apk_releases rel WHERE rel.app_id = a.id),
+        (SELECT array_agg(DISTINCT rel.platform) FROM apk_releases rel WHERE rel.app_id = a.id AND rel.platform IS NOT NULL AND rel.platform != 'unknown'),
         a.supported_platforms,
-        ARRAY['android']::text[]
+        ARRAY[]::text[]
       ) AS supported_platforms
     FROM apk_apps a
     JOIN apk_repositories r ON r.id = a.repo_id
@@ -228,9 +228,9 @@ export const listPublishedApps = async (
   const sql = `
     SELECT a.*, r.repo_slug,
       COALESCE(
-        (SELECT array_agg(DISTINCT rel2.platform) FROM apk_releases rel2 WHERE rel2.app_id = a.id),
+        (SELECT array_agg(DISTINCT rel2.platform) FROM apk_releases rel2 WHERE rel2.app_id = a.id AND rel2.platform IS NOT NULL AND rel2.platform != 'unknown'),
         a.supported_platforms,
-        ARRAY['android']::text[]
+        ARRAY[]::text[]
       ) AS supported_platforms,
       json_build_object(
         'id', rel.id,
@@ -252,7 +252,15 @@ export const listPublishedApps = async (
     LEFT JOIN LATERAL (
       SELECT * FROM apk_releases
       WHERE app_id = a.id
-      ORDER BY version_code DESC, created_at DESC
+      ORDER BY version_code DESC,
+        CASE
+          WHEN platform = 'macos' AND (original_filename ILIKE '%.dmg' OR original_filename ILIKE '%.pkg') THEN 1
+          WHEN platform = 'windows' AND (original_filename ILIKE '%.exe' OR original_filename ILIKE '%.msi') THEN 1
+          WHEN platform = 'android' AND original_filename ILIKE '%.apk' THEN 1
+          WHEN platform = 'linux' AND (original_filename ILIKE '%.appimage' OR original_filename ILIKE '%.deb') THEN 1
+          ELSE 2
+        END ASC,
+        created_at DESC
       LIMIT 1
     ) rel ON true
     WHERE a.is_published = true
@@ -268,9 +276,9 @@ export const listAllApps = async (
   const sql = `
     SELECT a.*, r.repo_slug,
       COALESCE(
-        (SELECT array_agg(DISTINCT rel2.platform) FROM apk_releases rel2 WHERE rel2.app_id = a.id),
+        (SELECT array_agg(DISTINCT rel2.platform) FROM apk_releases rel2 WHERE rel2.app_id = a.id AND rel2.platform IS NOT NULL AND rel2.platform != 'unknown'),
         a.supported_platforms,
-        ARRAY['android']::text[]
+        ARRAY[]::text[]
       ) AS supported_platforms,
       (SELECT COUNT(*)::int FROM apk_releases WHERE app_id = a.id) AS release_count
     FROM apk_apps a
@@ -459,7 +467,16 @@ export const getLatestRelease = async (
     sql += ` AND platform = $2`;
     values.push(platform);
   }
-  sql += ` ORDER BY version_code DESC, created_at DESC LIMIT 1`;
+  sql += ` ORDER BY version_code DESC,
+    CASE
+      WHEN platform = 'macos' AND (original_filename ILIKE '%.dmg' OR original_filename ILIKE '%.pkg') THEN 1
+      WHEN platform = 'windows' AND (original_filename ILIKE '%.exe' OR original_filename ILIKE '%.msi') THEN 1
+      WHEN platform = 'android' AND original_filename ILIKE '%.apk' THEN 1
+      WHEN platform = 'linux' AND (original_filename ILIKE '%.appimage' OR original_filename ILIKE '%.deb') THEN 1
+      ELSE 2
+    END ASC,
+    created_at DESC
+    LIMIT 1`;
   const res = await client.query<ApkReleaseModel>(sql, values);
   return res.rows[0] || null;
 };

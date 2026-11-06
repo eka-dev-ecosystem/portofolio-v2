@@ -140,9 +140,9 @@
               </div>
 
               <!-- Supported Platform Badges -->
-              <div class="flex flex-wrap items-center gap-1.5 pt-1">
+              <div v-if="app.supported_platforms && app.supported_platforms.length > 0" class="flex flex-wrap items-center gap-1.5 pt-1">
                 <span
-                  v-for="plat in (app.supported_platforms || ['android'])"
+                  v-for="plat in app.supported_platforms"
                   :key="plat"
                   class="text-[10px] px-2 py-0.5 rounded-md font-mono flex items-center gap-1.5 bg-white/5 text-slate-300 border border-white/10 uppercase"
                 >

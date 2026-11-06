@@ -17,20 +17,34 @@ export default defineEventHandler(async (event) => {
   const { app, release } = await getDownloadRelease(packageName, undefined, platformParam);
 
   const platform = release.platform || "android";
+  const origName = (release.original_filename || "").toLowerCase();
   let contentType = "application/octet-stream";
   let ext = "bin";
-  if (platform === "android") {
+
+  if (origName.endsWith(".zip")) {
+    contentType = "application/zip";
+    ext = "zip";
+  } else if (origName.endsWith(".tar.gz") || origName.endsWith(".tgz")) {
+    contentType = "application/gzip";
+    ext = "tar.gz";
+  } else if (platform === "android") {
     contentType = "application/vnd.android.package-archive";
     ext = "apk";
   } else if (platform === "windows") {
-    contentType = "application/vnd.microsoft.portable-executable";
-    ext = release.original_filename?.endsWith(".msi") ? "msi" : "exe";
+    contentType = origName.endsWith(".msi")
+      ? "application/x-msi"
+      : "application/vnd.microsoft.portable-executable";
+    ext = origName.endsWith(".msi") ? "msi" : "exe";
   } else if (platform === "macos") {
-    contentType = "application/x-apple-diskimage";
-    ext = release.original_filename?.endsWith(".pkg") ? "pkg" : "dmg";
+    contentType = origName.endsWith(".pkg")
+      ? "application/x-new-installer"
+      : "application/x-apple-diskimage";
+    ext = origName.endsWith(".pkg") ? "pkg" : "dmg";
   } else if (platform === "linux") {
-    contentType = "application/x-executable";
-    ext = release.original_filename?.endsWith(".deb") ? "deb" : "AppImage";
+    contentType = origName.endsWith(".deb")
+      ? "application/vnd.debian.binary-package"
+      : "application/x-executable";
+    ext = origName.endsWith(".deb") ? "deb" : "AppImage";
   }
 
   const safeFileName =
