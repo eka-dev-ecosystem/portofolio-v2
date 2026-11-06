@@ -1,3 +1,10 @@
+## [1.19.1](https://github.com/exa-dev-portfolio/portofolio-v2/compare/v1.19.0...v1.19.1) (2026-11-06)
+
+
+### Bug Fixes
+
+* **layout:** resolve navbar overflow on tablet and medium viewports (>780px) ([aa2e59e](https://github.com/exa-dev-portfolio/portofolio-v2/commit/aa2e59e5aa24ab8f497109f732e397efc446edf2))
+
 # [1.19.0](https://github.com/exa-dev-portfolio/portofolio-v2/compare/v1.18.2...v1.19.0) (2026-11-06)
 
 
