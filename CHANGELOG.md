@@ -1,3 +1,10 @@
+# [1.19.0](https://github.com/exa-dev-portfolio/portofolio-v2/compare/v1.18.2...v1.19.0) (2026-11-06)
+
+
+### Features
+
+* **intro:** add apple-style first visit welcome intro with transparent glassmorphism ([d555a98](https://github.com/exa-dev-portfolio/portofolio-v2/commit/d555a987cd175bc1b547959c07d3e589ab6810db))
+
 ## [1.18.2](https://github.com/exa-dev-portfolio/portofolio-v2/compare/v1.18.1...v1.18.2) (2026-11-06)
 
 
