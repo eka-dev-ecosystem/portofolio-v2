@@ -143,7 +143,7 @@ onUnmounted(() => {
         </NuxtLink>
 
         <!-- Center Nav Links (Desktop) -->
-        <nav class="hidden md:flex items-center gap-1 p-1 rounded-full bg-[#141417]/80 border border-white/10 backdrop-blur-xl shadow-lg">
+        <nav class="hidden lg:flex items-center gap-1 p-1 rounded-full bg-[#141417]/80 border border-white/10 backdrop-blur-xl shadow-lg">
           <button
             v-for="item in navItems"
             :key="item.href"
@@ -174,7 +174,7 @@ onUnmounted(() => {
           <NuxtLink
             v-if="isApkStoreEnabled"
             to="/apps"
-            class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all cursor-pointer"
+            class="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all cursor-pointer"
             :class="route.path === '/apps'
               ? 'bg-white text-black font-semibold shadow-sm border-white'
               : 'bg-white/5 border-white/10 hover:bg-white/10 text-zinc-300 hover:text-white'"
@@ -186,7 +186,7 @@ onUnmounted(() => {
           <!-- Console Link -->
           <NuxtLink
             to="/dashboard"
-            class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-mono bg-white/5 border-white/10 hover:bg-white/10 text-zinc-300 hover:text-white transition-all cursor-pointer"
+            class="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-mono bg-white/5 border-white/10 hover:bg-white/10 text-zinc-300 hover:text-white transition-all cursor-pointer"
             title="Open Console"
           >
             <Icon name="carbon:terminal" size="13" />
@@ -205,7 +205,7 @@ onUnmounted(() => {
           <!-- Mobile Menu Toggle Button -->
           <button
             @click="toggleMobileMenu"
-            class="md:hidden p-2 rounded-full bg-[#141417]/90 border border-white/10 text-zinc-300 hover:text-white transition-colors cursor-pointer"
+            class="lg:hidden p-2 rounded-full bg-[#141417]/90 border border-white/10 text-zinc-300 hover:text-white transition-colors cursor-pointer"
             aria-label="Toggle Menu"
           >
             <Icon :name="isMobileMenuOpen ? 'carbon:close' : 'carbon:menu'" size="18" />
@@ -226,7 +226,7 @@ onUnmounted(() => {
     >
       <div
         v-if="isMobileMenuOpen"
-        class="fixed top-16 inset-x-4 z-40 p-4 rounded-2xl bg-[#141417] border border-white/10 shadow-2xl backdrop-blur-2xl md:hidden space-y-2"
+        class="fixed top-16 inset-x-4 sm:inset-x-6 sm:max-w-sm sm:ml-auto z-40 p-4 rounded-2xl bg-[#141417] border border-white/10 shadow-2xl backdrop-blur-2xl lg:hidden space-y-2"
       >
         <button
           v-for="item in navItems"
