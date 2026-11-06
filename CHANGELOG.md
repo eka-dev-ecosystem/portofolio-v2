@@ -1,3 +1,10 @@
+## [1.18.2](https://github.com/exa-dev-portfolio/portofolio-v2/compare/v1.18.1...v1.18.2) (2026-11-06)
+
+
+### Bug Fixes
+
+* **apps:** accurate platform detection and release binary handling ([562db67](https://github.com/exa-dev-portfolio/portofolio-v2/commit/562db67e6aac0fbda3dad9a6fcd620fd06b07ca9))
+
 ## [1.18.1](https://github.com/exa-dev-portfolio/portofolio-v2/compare/v1.18.0...v1.18.1) (2026-11-05)
 
 
