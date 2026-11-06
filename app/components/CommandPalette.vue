@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useWelcomeIntro } from '~/composables/useWelcomeIntro'
+
+const { triggerReplay } = useWelcomeIntro()
 
 const isOpen = ref(false)
 const searchQuery = ref('')
@@ -55,6 +58,7 @@ const commands: CommandItem[] = [
   { id: 'nav-contact', title: 'Get in Touch', subtitle: 'Inquiries, opportunities, and contact form', category: 'Navigation', icon: 'carbon:email', action: () => navigateToSection('#contact') },
 
   // Quick Actions
+  { id: 'act-replay-intro', title: 'Replay Welcome Intro', subtitle: 'Experience the Apple iPhone style Exa handwriting animation', category: 'Quick Actions', icon: 'carbon:play', action: () => { isOpen.value = false; triggerReplay() } },
   { id: 'act-tech-radar', title: 'Daily Tech Radar', subtitle: 'Curated tech updates & AI daily briefing', category: 'Quick Actions', icon: 'carbon:radar', action: () => { isOpen.value = false; router.push('/dashboard/tech-radar') } },
   { id: 'act-resume', title: 'Download Resume / CV', subtitle: 'PDF format', category: 'Quick Actions', icon: 'carbon:document-download', action: () => { if (props.cvUrl) window.open(props.cvUrl, '_blank') } },
   { id: 'act-copy-email', title: 'Copy Email Address', subtitle: props.userEmail || 'contact@eka-dev.cloud', category: 'Quick Actions', icon: 'carbon:copy', action: copyEmail },

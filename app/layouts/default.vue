@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import type { UserSettingsModel } from '~/types/settings'
+import IPhoneWelcomeIntro from '~/components/intro/IPhoneWelcomeIntro.client.vue'
+import { useWelcomeIntro } from '~/composables/useWelcomeIntro'
+
+const { checkAndInit } = useWelcomeIntro()
 
 const isMobileMenuOpen = ref(false)
 const activeSection = ref('#about')
@@ -108,6 +112,7 @@ onMounted(() => {
     activeSection.value = window.location.hash
   }
   updateActiveSection()
+  checkAndInit()
 })
 
 onUnmounted(() => {
@@ -294,6 +299,11 @@ onUnmounted(() => {
 
     <!-- AI Copilot Assistant -->
     <AIAssistant ref="aiAssistantRef" />
+
+    <!-- iPhone First-Visit Welcome Intro Animation (Apple OOBE Style) -->
+    <ClientOnly>
+      <IPhoneWelcomeIntro />
+    </ClientOnly>
 
   </div>
 </template>
