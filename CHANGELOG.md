@@ -1,3 +1,10 @@
+## [1.19.2](https://github.com/exa-dev-portfolio/portofolio-v2/compare/v1.19.1...v1.19.2) (2026-11-10)
+
+
+### Bug Fixes
+
+* **seo:** enforce 301 canonical redirects, sanitize robots.txt, and add noindex to login ([c4f7725](https://github.com/exa-dev-portfolio/portofolio-v2/commit/c4f77253d46512d37e87c3976d0dba0615716b5f))
+
 ## [1.19.1](https://github.com/exa-dev-portfolio/portofolio-v2/compare/v1.19.0...v1.19.1) (2026-11-06)
 
 
