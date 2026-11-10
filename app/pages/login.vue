@@ -9,6 +9,14 @@ useHead({
   title: 'Sign In | Eka Console',
   meta: [
     {
+      name: 'robots',
+      content: 'noindex, nofollow',
+    },
+    {
+      name: 'googlebot',
+      content: 'noindex, nofollow',
+    },
+    {
       name: 'description',
       content: 'Authenticate to access developer console, daily tech radar, and portfolio management.',
     },

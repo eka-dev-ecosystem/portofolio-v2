@@ -2,12 +2,14 @@
 User-Agent: *
 Allow: /
 
-# Disallow private pages
+# Disallow private & backend routes
+Disallow: /dashboard
 Disallow: /dashboard/
 Disallow: /login
 Disallow: /admin/
+Disallow: /api/
 
-# Allow CSS, JS, images
+# Allow CSS, JS, images & fonts
 Allow: /*.css$
 Allow: /*.js$
 Allow: /*.png$
@@ -17,13 +19,11 @@ Allow: /*.gif$
 Allow: /*.webp$
 Allow: /*.svg$
 Allow: /*.ico$
+Allow: /*.woff$
+Allow: /*.woff2$
 
 # Disallow query parameters that create duplicate content
 Disallow: /*?*
 
-# Sitemaps
+# Sitemaps (Canonical single domain)
 Sitemap: https://eka-dev.cloud/sitemap.xml
-Sitemap: https://www.eka-dev.cloud/sitemap.xml
-
-# Crawl delay (optional - remove if not needed)
-Crawl-delay: 1
