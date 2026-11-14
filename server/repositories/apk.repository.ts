@@ -43,6 +43,10 @@ export const updateRepository = async (
   const values: unknown[] = [id];
   let idx = 2;
 
+  if (data.repo_slug !== undefined) {
+    updates.push(`repo_slug = $${idx++}`);
+    values.push(data.repo_slug);
+  }
   if (data.is_private !== undefined) {
     updates.push(`is_private = $${idx++}`);
     values.push(data.is_private);
@@ -105,6 +109,29 @@ export const getRepositoryBySlug = async (
   const res = await client.query<ApkRepositoryModel>(
     "SELECT * FROM apk_repositories WHERE LOWER(repo_slug) = LOWER($1)",
     [slug]
+  );
+  return res.rows[0] || null;
+};
+
+export const getRepositoriesByName = async (
+  client: PoolClient,
+  repoName: string
+): Promise<ApkRepositoryModel[]> => {
+  const res = await client.query<ApkRepositoryModel>(
+    "SELECT * FROM apk_repositories WHERE LOWER(repo_slug) LIKE '%/' || LOWER($1)",
+    [repoName]
+  );
+  return res.rows;
+};
+
+export const updateRepositorySlug = async (
+  client: PoolClient,
+  id: string,
+  newSlug: string
+): Promise<ApkRepositoryModel | null> => {
+  const res = await client.query<ApkRepositoryModel>(
+    "UPDATE apk_repositories SET repo_slug = $1, updated_at = current_timestamp WHERE id = $2 RETURNING *",
+    [newSlug, id]
   );
   return res.rows[0] || null;
 };

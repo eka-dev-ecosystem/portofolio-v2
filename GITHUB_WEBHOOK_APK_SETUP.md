@@ -87,6 +87,20 @@ Jika Anda baru saja mendaftarkan repository yang sudah memiliki rilis sebelumnya
 
 ---
 
+## 🔄 Perpindahan atau Rename Repositori (Repo Migration)
+Jika repositori GitHub Anda dipindahkan ke organisasi baru (misal: dari `exa31/winmix` ke `eka-dev-ecosystem/winmix`) atau diganti namanya:
+1. **Auto-Healing Otomatis**:
+   - Jika webhook tetap dikirimkan ke endpoint kami dengan Webhook Secret yang valid, sistem backend akan **secara otomatis mendeteksi perpindahan repositori** berdasarkan kecocokan nama repositori dan validasi HMAC SHA-256 signature.
+   - Slug repositori di database akan diperbarui secara otomatis tanpa downtime atau kehilangan riwayat rilis aplikasi.
+2. **Update Manual melalui Dashboard**:
+   - Anda juga dapat memperbarui slug repositori kapan saja melalui dashboard di `/dashboard/apps`.
+   - Klik tombol **Edit** (ikon pensil) pada kartu repositori.
+   - Ubah kolom **Repository Slug** ke alamat baru (contoh: `eka-dev-ecosystem/winmix`), lalu klik **"Save Changes"**.
+3. **Pengecekan Konfigurasi Webhook**:
+   - Klik tombol **Webhook Info** (ikon informasi `i`) pada kartu repositori di dashboard untuk melihat Payload URL, Webhook Secret, dan tautan langsung ke halaman Webhooks repositori GitHub terkait.
+
+---
+
 ## 🌐 Endpoint API Publik
 
 | Endpoint | Method | Keterangan |

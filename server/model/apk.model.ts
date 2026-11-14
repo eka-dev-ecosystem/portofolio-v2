@@ -16,6 +16,11 @@ export type SupportedPlatform = "android" | "windows" | "macos" | "linux";
 export type CreateApkRepositoryInput = z.infer<typeof createApkRepositorySchema>;
 
 export const updateApkRepositorySchema = z.object({
+  repo_slug: z
+    .string()
+    .min(3, "Repo slug is required")
+    .regex(/^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/, "Format must be owner/repo (e.g. acme/mobile-app)")
+    .optional(),
   is_private: z.boolean().optional(),
   access_token: z.string().optional().nullable(),
   webhook_secret: z.string().optional(),

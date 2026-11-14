@@ -347,6 +347,22 @@
           <!-- Actions -->
           <div class="flex items-center gap-2.5 self-start lg:self-center">
             <button
+              @click="openWebhookInfo(repo)"
+              class="p-2.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 text-xs transition-colors cursor-pointer"
+              title="Webhook Setup Info"
+            >
+              <Icon name="carbon:information" size="16" />
+            </button>
+
+            <button
+              @click="openEditModal(repo)"
+              class="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 hover:text-white border border-white/15 text-xs transition-colors cursor-pointer"
+              title="Edit Repository Settings"
+            >
+              <Icon name="carbon:edit" size="16" />
+            </button>
+
+            <button
               @click="triggerSync(repo)"
               :disabled="syncingId === repo.id"
               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
@@ -542,6 +558,214 @@
           >
             <Icon v-if="deleting" name="carbon:renew" size="14" class="animate-spin" />
             <span>{{ deleting ? 'Deleting...' : 'Yes, Delete' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Repository Modal -->
+    <div
+      v-if="showEditModal && editingRepo"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      @click.self="showEditModal = false"
+    >
+      <div class="bg-[#141417] border border-white/10 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+        <button
+          @click="showEditModal = false"
+          class="absolute top-4 right-4 text-white/50 hover:text-white transition-colors cursor-pointer"
+        >
+          <Icon name="carbon:close" size="20" />
+        </button>
+
+        <h3 class="text-lg font-bold text-white mb-1">Edit Repository Configuration</h3>
+        <p class="text-xs text-white/60 mb-5">
+          Update repository slug, webhook secret, or authentication token after repository rename/migration.
+        </p>
+
+        <form @submit.prevent="submitEdit" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-white/80 mb-1.5">
+              Repository Slug (owner/repo) *
+            </label>
+            <input
+              v-model="editForm.repo_slug"
+              type="text"
+              placeholder="e.g. eka-dev-ecosystem/my-app"
+              required
+              class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-sm text-white focus:outline-none focus:border-primary font-mono placeholder:text-white/30"
+            />
+            <p class="text-[10px] text-white/50 mt-1">If the repository was transferred or renamed on GitHub, update its slug here.</p>
+          </div>
+
+          <div class="flex items-center gap-2.5 pt-1">
+            <input
+              v-model="editForm.is_private"
+              type="checkbox"
+              id="edit_is_private"
+              class="rounded bg-white/10 border-white/20 text-primary focus:ring-0 cursor-pointer"
+            />
+            <label for="edit_is_private" class="text-xs text-white/80 select-none cursor-pointer">
+              This repository is Private
+            </label>
+          </div>
+
+          <div v-if="editForm.is_private">
+            <label class="block text-xs font-semibold text-white/80 mb-1.5">
+              GitHub Personal Access Token (PAT)
+            </label>
+            <input
+              v-model="editForm.access_token"
+              type="password"
+              placeholder="Leave blank to keep existing token"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-sm text-white focus:outline-none focus:border-primary font-mono placeholder:text-white/30"
+            />
+            <p class="text-[10px] text-white/50 mt-1">Requires <code>repo</code> scope to download release assets from private repositories.</p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-white/80 mb-1.5">
+              Webhook Secret *
+            </label>
+            <input
+              v-model="editForm.webhook_secret"
+              type="text"
+              required
+              class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-sm text-white focus:outline-none focus:border-primary font-mono placeholder:text-white/30"
+            />
+            <p class="text-[10px] text-white/50 mt-1">Must match the secret entered in GitHub Settings &gt; Webhooks.</p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-white/80 mb-1.5">
+              Asset Regex Filter
+            </label>
+            <input
+              v-model="editForm.asset_filter_regex"
+              type="text"
+              placeholder=".*\\.(apk|exe|msi|dmg|pkg|AppImage|deb|zip)$"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-sm text-white focus:outline-none focus:border-primary font-mono placeholder:text-white/30"
+            />
+          </div>
+
+          <div class="pt-4 flex items-center justify-end gap-2.5 border-t border-white/10">
+            <button
+              type="button"
+              @click="showEditModal = false"
+              class="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-white/70 font-medium transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              :disabled="submitting"
+              class="px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-xs text-zinc-950 font-semibold shadow-sm disabled:opacity-50 transition-all cursor-pointer"
+            >
+              {{ submitting ? 'Updating...' : 'Save Changes' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Webhook Info Modal -->
+    <div
+      v-if="showWebhookInfoModal && webhookInfoRepo"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      @click.self="showWebhookInfoModal = false"
+    >
+      <div class="bg-[#141417] border border-white/10 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
+        <button
+          @click="showWebhookInfoModal = false"
+          class="absolute top-4 right-4 text-white/50 hover:text-white transition-colors cursor-pointer"
+        >
+          <Icon name="carbon:close" size="20" />
+        </button>
+
+        <div class="flex items-center gap-2.5 mb-1 text-purple-400">
+          <Icon name="carbon:webhook" size="22" />
+          <h3 class="text-lg font-bold text-white">GitHub Webhook Configuration</h3>
+        </div>
+        <p class="text-xs text-white/60 mb-5 leading-relaxed">
+          Configure these exact settings in GitHub to automatically sync new releases from <span class="font-mono text-cyan-400 font-semibold">{{ webhookInfoRepo.repo_slug }}</span>.
+        </p>
+
+        <div class="space-y-3.5 bg-black/30 p-4 rounded-xl border border-white/10 text-xs font-mono">
+          <!-- Payload URL -->
+          <div>
+            <div class="flex items-center justify-between text-white/50 text-[11px] mb-1 font-sans">
+              <span>Payload URL</span>
+              <button
+                @click="copyText(webhookPayloadUrl)"
+                class="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer"
+              >
+                <Icon name="carbon:copy" size="13" />
+                <span>Copy</span>
+              </button>
+            </div>
+            <div class="p-2.5 rounded-lg bg-white/5 border border-white/10 text-white select-all break-all">
+              {{ webhookPayloadUrl }}
+            </div>
+          </div>
+
+          <!-- Content Type -->
+          <div>
+            <div class="text-white/50 text-[11px] mb-1 font-sans">Content type</div>
+            <div class="p-2.5 rounded-lg bg-white/5 border border-white/10 text-emerald-400 font-semibold">
+              application/json
+            </div>
+          </div>
+
+          <!-- Secret -->
+          <div>
+            <div class="flex items-center justify-between text-white/50 text-[11px] mb-1 font-sans">
+              <span>Secret</span>
+              <div class="flex items-center gap-2">
+                <button
+                  @click="showSecret[webhookInfoRepo.id] = !showSecret[webhookInfoRepo.id]"
+                  class="text-white/60 hover:text-white cursor-pointer"
+                >
+                  {{ showSecret[webhookInfoRepo.id] ? 'Hide' : 'Reveal' }}
+                </button>
+                <button
+                  @click="copyText(webhookInfoRepo.webhook_secret)"
+                  class="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer"
+                >
+                  <Icon name="carbon:copy" size="13" />
+                  <span>Copy</span>
+                </button>
+              </div>
+            </div>
+            <div class="p-2.5 rounded-lg bg-white/5 border border-white/10 text-white select-all break-all">
+              {{ showSecret[webhookInfoRepo.id] ? webhookInfoRepo.webhook_secret : '••••••••••••••••••••••••••••••••••••••••••••••••' }}
+            </div>
+          </div>
+
+          <!-- Event trigger -->
+          <div>
+            <div class="text-white/50 text-[11px] mb-1 font-sans">Events Trigger</div>
+            <div class="p-2.5 rounded-lg bg-white/5 border border-white/10 text-white/80 font-sans text-xs">
+              Select: <strong class="text-white">"Let me select individual events"</strong> &gt; Check <strong class="text-cyan-300 font-mono">"Releases"</strong> only.
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-5 flex items-center justify-between gap-3">
+          <a
+            :href="`https://github.com/${webhookInfoRepo.repo_slug}/settings/hooks`"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 text-xs font-semibold transition-all"
+          >
+            <span>Open GitHub Webhooks</span>
+            <Icon name="carbon:launch" size="14" />
+          </a>
+
+          <button
+            type="button"
+            @click="showWebhookInfoModal = false"
+            class="px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-xs text-zinc-950 font-semibold transition-all cursor-pointer"
+          >
+            Close
           </button>
         </div>
       </div>
@@ -908,7 +1132,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useToastCustom } from "~/composables/useToastCustom";
 
 definePageMeta({
@@ -948,6 +1172,27 @@ const webhookUrl = ref("");
 // Delete confirmation modal state
 const repoToDelete = ref<any>(null);
 const deleting = ref(false);
+
+// Edit Repository modal state
+const showEditModal = ref(false);
+const editingRepo = ref<any>(null);
+const editForm = ref({
+  repo_slug: "",
+  is_private: false,
+  access_token: "",
+  webhook_secret: "",
+  asset_filter_regex: "",
+});
+
+// Webhook Info modal state
+const showWebhookInfoModal = ref(false);
+const webhookInfoRepo = ref<any>(null);
+const webhookPayloadUrl = computed(() => {
+  if (import.meta.client) {
+    return `${window.location.origin}/api/v1/webhooks/github`;
+  }
+  return "https://eka-dev.cloud/api/v1/webhooks/github";
+});
 
 // Beta testers modal state
 const testersModalApp = ref<any>(null);
@@ -1168,6 +1413,45 @@ const triggerSync = async (repo: any) => {
   } finally {
     syncingId.value = null;
   }
+};
+
+const openEditModal = (repo: any) => {
+  editingRepo.value = repo;
+  editForm.value = {
+    repo_slug: repo.repo_slug,
+    is_private: repo.is_private,
+    access_token: "",
+    webhook_secret: repo.webhook_secret || "",
+    asset_filter_regex: repo.asset_filter_regex || ".*\\.(apk|exe|msi|dmg|pkg|AppImage|deb|zip)$",
+  };
+  showEditModal.value = true;
+};
+
+const submitEdit = async () => {
+  if (!editingRepo.value) return;
+  submitting.value = true;
+  try {
+    await $axios.put(`/api/v1/admin/apk/repositories/${editingRepo.value.id}`, {
+      repo_slug: editForm.value.repo_slug,
+      is_private: editForm.value.is_private,
+      access_token: editForm.value.is_private && editForm.value.access_token ? editForm.value.access_token : undefined,
+      webhook_secret: editForm.value.webhook_secret,
+      asset_filter_regex: editForm.value.asset_filter_regex,
+    });
+    showEditModal.value = false;
+    editingRepo.value = null;
+    toast.showSuccessToast("Repository Updated", "Repository configuration updated successfully");
+    await fetchData();
+  } catch (err: any) {
+    toast.showErrorToast("Update Failed", err.response?.data?.message || "Failed to update repository");
+  } finally {
+    submitting.value = false;
+  }
+};
+
+const openWebhookInfo = (repo: any) => {
+  webhookInfoRepo.value = repo;
+  showWebhookInfoModal.value = true;
 };
 
 const confirmDelete = (repo: any) => {

@@ -86,6 +86,13 @@ export async function updateRepository(
       throw new HttpError(404, "Repository not found");
     }
 
+    if (input.repo_slug && input.repo_slug.toLowerCase() !== existing.repo_slug.toLowerCase()) {
+      const duplicate = await apkRepo.getRepositoryBySlug(client, input.repo_slug);
+      if (duplicate && duplicate.id !== id) {
+        throw new HttpError(409, `Repository "${input.repo_slug}" is already registered`);
+      }
+    }
+
     return await apkRepo.updateRepository(client, id, input);
   });
 }
@@ -276,13 +283,31 @@ export async function handleGitHubWebhook(
   }
 
   const { repo, job } = await withTransaction(async (client) => {
-    const foundRepo = await apkRepo.getRepositoryBySlug(client, repoSlug);
+    let foundRepo = await apkRepo.getRepositoryBySlug(client, repoSlug);
+
+    // Smart Fallback: If exact repoSlug not found, check if repository was moved/renamed
+    if (!foundRepo && payload.repository?.name) {
+      const repoName = payload.repository.name;
+      const candidates = await apkRepo.getRepositoriesByName(client, repoName);
+
+      for (const candidate of candidates) {
+        if (verifyGitHubSignature(rawBody, signatureHeader, candidate.webhook_secret)) {
+          logger.info(
+            `[apk.service] Webhook detected repo rename/transfer from "${candidate.repo_slug}" to "${repoSlug}". Auto-updating database record.`
+          );
+          await apkRepo.updateRepositorySlug(client, candidate.id, repoSlug);
+          foundRepo = { ...candidate, repo_slug: repoSlug };
+          break;
+        }
+      }
+    }
+
     if (!foundRepo) {
       logger.warn(`[apk.service] Webhook received for unregistered repo: ${repoSlug}`);
       throw new HttpError(404, `Repository "${repoSlug}" is not registered in APK Store`);
     }
 
-    // Validate HMAC signature
+    // Validate HMAC signature (for normal exact-match flow)
     const isValid = verifyGitHubSignature(rawBody, signatureHeader, foundRepo.webhook_secret);
     if (!isValid) {
       logger.warn(`[apk.service] Invalid webhook signature for repo ${repoSlug}`);
