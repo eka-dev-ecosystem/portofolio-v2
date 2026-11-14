@@ -1,3 +1,10 @@
+# [1.20.0](https://github.com/eka-dev-ecosystem/portofolio-v2/compare/v1.19.2...v1.20.0) (2026-11-14)
+
+
+### Features
+
+* **apk:** support repo migration with smart webhook auto-healing and edit repo modal ([231d67a](https://github.com/eka-dev-ecosystem/portofolio-v2/commit/231d67a85b90448326504d0f1996d8e73b251e67))
+
 ## [1.19.2](https://github.com/exa-dev-portfolio/portofolio-v2/compare/v1.19.1...v1.19.2) (2026-11-10)
 
 
