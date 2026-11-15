@@ -140,7 +140,11 @@
         <div class="space-y-4">
           <div class="flex items-start gap-4">
             <!-- App Icon -->
-            <div class="w-14 h-14 rounded-2xl bg-zinc-900 border border-white/15 p-1 shrink-0 flex items-center justify-center shadow-md overflow-hidden group-hover:scale-105 transition-transform">
+            <NuxtLink
+              :to="'/apps/' + (app.slug || app.package_name)"
+              class="w-14 h-14 rounded-2xl bg-zinc-900 border border-white/15 p-1 shrink-0 flex items-center justify-center shadow-md overflow-hidden group-hover:scale-105 transition-transform cursor-pointer"
+              :title="`View ${app.app_name} page`"
+            >
               <img
                 v-if="app.icon_url"
                 :src="app.icon_url"
@@ -149,14 +153,18 @@
                 @error="(e: any) => e.target.style.display = 'none'"
               />
               <Icon v-else name="carbon:application-mobile" size="24" class="text-zinc-400" />
-            </div>
+            </NuxtLink>
 
             <!-- Titles & Badges -->
             <div class="flex-1 min-w-0">
               <div class="flex items-center justify-between gap-2">
-                <h3 class="text-base sm:text-lg font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
+                <NuxtLink
+                  :to="'/apps/' + (app.slug || app.package_name)"
+                  class="text-base sm:text-lg font-bold text-white truncate hover:text-indigo-300 transition-colors"
+                  :title="`Open ${app.app_name} landing page`"
+                >
                   {{ app.app_name }}
-                </h3>
+                </NuxtLink>
                 <!-- Status Badge -->
                 <span
                   :class="[
@@ -311,13 +319,13 @@
               <Icon :name="copied ? 'carbon:checkmark' : 'carbon:copy'" size="14" class="text-zinc-400" />
               <span>{{ copied ? 'Copied' : 'Copy Link' }}</span>
             </button>
-            <button
-              @click="openDetailModal(app)"
+            <NuxtLink
+              :to="'/apps/' + (app.slug || app.package_name)"
               class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white text-xs font-mono border border-white/10 transition-colors cursor-pointer"
             >
-              <Icon name="carbon:document-view" size="14" class="text-zinc-400" />
-              <span>Changelog</span>
-            </button>
+              <Icon name="carbon:launch" size="14" class="text-zinc-400" />
+              <span>Full Page</span>
+            </NuxtLink>
           </div>
         </div>
       </div>
@@ -413,7 +421,18 @@
                 {{ (selectedAppDetail.status || 'development') === 'production' ? 'Full Release' : 'Development' }}
               </span>
             </div>
-            <p class="text-xs text-zinc-500 font-mono truncate">{{ selectedAppDetail.package_name }}</p>
+            <div class="flex items-center gap-2 mt-1">
+              <p class="text-xs text-zinc-500 font-mono truncate">{{ selectedAppDetail.package_name }}</p>
+              <span class="text-zinc-600">•</span>
+              <NuxtLink
+                :to="'/apps/' + (selectedAppDetail.slug || selectedAppDetail.package_name)"
+                class="text-xs text-indigo-400 hover:text-indigo-300 hover:underline font-mono inline-flex items-center gap-1 cursor-pointer"
+                @click="selectedAppDetail = null"
+              >
+                <span>Full Page</span>
+                <Icon name="carbon:launch" size="11" />
+              </NuxtLink>
+            </div>
           </div>
         </div>
 

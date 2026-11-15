@@ -55,7 +55,9 @@ export interface ApkAppModel {
   id: string;
   repo_id: string;
   package_name: string;
+  slug?: string | null;
   app_name: string;
+  tagline?: string | null;
   description: string | null;
   icon_url: string | null;
   latest_version_code: number;

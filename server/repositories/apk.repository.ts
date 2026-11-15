@@ -218,7 +218,7 @@ export const upsertApp = async (
 
 export const getAppByPackageName = async (
   client: PoolClient,
-  packageName: string
+  packageNameOrSlug: string
 ): Promise<ApkAppModel | null> => {
   const sql = `
     SELECT a.*, r.repo_slug,
@@ -229,9 +229,11 @@ export const getAppByPackageName = async (
       ) AS supported_platforms
     FROM apk_apps a
     JOIN apk_repositories r ON r.id = a.repo_id
-    WHERE a.package_name = $1
+    WHERE a.package_name = $1 OR a.slug = $1
+    ORDER BY (a.slug = $1) DESC
+    LIMIT 1
   `;
-  const res = await client.query<ApkAppModel>(sql, [packageName]);
+  const res = await client.query<ApkAppModel>(sql, [packageNameOrSlug]);
   return res.rows[0] || null;
 };
 
