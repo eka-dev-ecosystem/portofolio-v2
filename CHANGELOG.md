@@ -1,3 +1,10 @@
+# [1.22.0](https://github.com/eka-dev-ecosystem/portofolio-v2/compare/v1.21.0...v1.22.0) (2026-11-15)
+
+
+### Features
+
+* **apps:** add dedicated SSR landing pages, dynamic XML sitemap, and Schema.org SEO for applications ([1457011](https://github.com/eka-dev-ecosystem/portofolio-v2/commit/1457011e51341192baefa38c36060d14eb125039))
+
 # [1.21.0](https://github.com/eka-dev-ecosystem/portofolio-v2/compare/v1.20.0...v1.21.0) (2026-11-15)
 
 
