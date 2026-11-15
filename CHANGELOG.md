@@ -1,3 +1,10 @@
+# [1.21.0](https://github.com/eka-dev-ecosystem/portofolio-v2/compare/v1.20.0...v1.21.0) (2026-11-15)
+
+
+### Features
+
+* **apk:** add tag_filter_regex to support monorepo and multi-stream releases ([01a6294](https://github.com/eka-dev-ecosystem/portofolio-v2/commit/01a6294aaeb6db7cf41357c98d8153fe4848e853))
+
 # [1.20.0](https://github.com/eka-dev-ecosystem/portofolio-v2/compare/v1.19.2...v1.20.0) (2026-11-14)
 
 
