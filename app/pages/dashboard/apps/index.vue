@@ -319,6 +319,10 @@
                 <Icon name="carbon:tag" size="14" class="text-white/40" />
                 <span>Total Releases: <strong class="text-white">{{ repo.release_count || 0 }}</strong></span>
               </span>
+              <span v-if="repo.tag_filter_regex" class="flex items-center gap-1.5 text-amber-300/90">
+                <Icon name="carbon:filter" size="14" class="text-amber-400" />
+                <span>Tag: <code class="text-amber-300 bg-amber-400/10 px-1.5 py-0.5 rounded text-[11px] font-mono">{{ repo.tag_filter_regex }}</code></span>
+              </span>
             </div>
 
             <!-- Webhook Secret Snippet -->
@@ -505,6 +509,19 @@
             <p class="text-[10px] text-white/50 mt-1">Regex pattern to match binary files from GitHub release assets (e.g. .apk, .exe, .dmg, .AppImage, .zip).</p>
           </div>
 
+          <div>
+            <label class="block text-xs font-semibold text-white/80 mb-1.5">
+              Tag Filter Regex (Optional)
+            </label>
+            <input
+              v-model="form.tag_filter_regex"
+              type="text"
+              placeholder="e.g. ^android- or v.*"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-sm text-white focus:outline-none focus:border-primary font-mono placeholder:text-white/30"
+            />
+            <p class="text-[10px] text-white/50 mt-1">Filter releases by tag prefix for monorepos (e.g. <code>^android-</code> to only sync Android tags and ignore ios-* or backend-*).</p>
+          </div>
+
           <div class="pt-4 flex items-center justify-end gap-2.5 border-t border-white/10">
             <button
               type="button"
@@ -645,6 +662,19 @@
               placeholder=".*\\.(apk|exe|msi|dmg|pkg|AppImage|deb|zip)$"
               class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-sm text-white focus:outline-none focus:border-primary font-mono placeholder:text-white/30"
             />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-white/80 mb-1.5">
+              Tag Filter Regex (Optional)
+            </label>
+            <input
+              v-model="editForm.tag_filter_regex"
+              type="text"
+              placeholder="e.g. ^android- or v.*"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-sm text-white focus:outline-none focus:border-primary font-mono placeholder:text-white/30"
+            />
+            <p class="text-[10px] text-white/50 mt-1">Filter releases by tag prefix for monorepos (e.g. <code>^android-</code> to only sync Android tags and ignore ios-* or backend-*).</p>
           </div>
 
           <div class="pt-4 flex items-center justify-end gap-2.5 border-t border-white/10">
@@ -1182,6 +1212,7 @@ const editForm = ref({
   access_token: "",
   webhook_secret: "",
   asset_filter_regex: "",
+  tag_filter_regex: "",
 });
 
 // Webhook Info modal state
@@ -1223,6 +1254,7 @@ const form = ref({
   is_private: false,
   access_token: "",
   asset_filter_regex: ".*\\.(apk|exe|msi|dmg|pkg|AppImage|deb|zip)$",
+  tag_filter_regex: "",
 });
 
 onMounted(() => {
@@ -1381,6 +1413,7 @@ const openRegisterModal = () => {
     is_private: false,
     access_token: "",
     asset_filter_regex: ".*\\.(apk|exe|msi|dmg|pkg|AppImage|deb|zip)$",
+    tag_filter_regex: "",
   };
   showModal.value = true;
 };
@@ -1391,6 +1424,7 @@ const submitRegister = async () => {
     await $axios.post("/api/v1/admin/apk/repositories", {
       ...form.value,
       access_token: form.value.is_private ? form.value.access_token : null,
+      tag_filter_regex: form.value.tag_filter_regex?.trim() || null,
     });
     showModal.value = false;
     toast.showSuccessToast("Repository Registered", `Repository ${form.value.repo_slug} has been successfully registered`);
@@ -1423,6 +1457,7 @@ const openEditModal = (repo: any) => {
     access_token: "",
     webhook_secret: repo.webhook_secret || "",
     asset_filter_regex: repo.asset_filter_regex || ".*\\.(apk|exe|msi|dmg|pkg|AppImage|deb|zip)$",
+    tag_filter_regex: repo.tag_filter_regex || "",
   };
   showEditModal.value = true;
 };
@@ -1437,6 +1472,7 @@ const submitEdit = async () => {
       access_token: editForm.value.is_private && editForm.value.access_token ? editForm.value.access_token : undefined,
       webhook_secret: editForm.value.webhook_secret,
       asset_filter_regex: editForm.value.asset_filter_regex,
+      tag_filter_regex: editForm.value.tag_filter_regex?.trim() || null,
     });
     showEditModal.value = false;
     editingRepo.value = null;

@@ -19,8 +19,8 @@ export const createRepository = async (
   data: CreateApkRepositoryInput & { webhook_secret: string }
 ): Promise<ApkRepositoryModel> => {
   const sql = `
-    INSERT INTO apk_repositories (repo_slug, is_private, access_token, webhook_secret, asset_filter_regex)
-    VALUES ($1, $2, $3, $4, $5)
+    INSERT INTO apk_repositories (repo_slug, is_private, access_token, webhook_secret, asset_filter_regex, tag_filter_regex)
+    VALUES ($1, $2, $3, $4, $5, $6)
     RETURNING *
   `;
   const values = [
@@ -29,6 +29,7 @@ export const createRepository = async (
     data.access_token || null,
     data.webhook_secret,
     data.asset_filter_regex || ".*\\.apk$",
+    data.tag_filter_regex || null,
   ];
   const res = await client.query<ApkRepositoryModel>(sql, values);
   return res.rows[0];
@@ -62,6 +63,10 @@ export const updateRepository = async (
   if (data.asset_filter_regex !== undefined) {
     updates.push(`asset_filter_regex = $${idx++}`);
     values.push(data.asset_filter_regex);
+  }
+  if (data.tag_filter_regex !== undefined) {
+    updates.push(`tag_filter_regex = $${idx++}`);
+    values.push(data.tag_filter_regex);
   }
 
   if (updates.length === 0) {

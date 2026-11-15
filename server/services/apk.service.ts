@@ -282,7 +282,7 @@ export async function handleGitHubWebhook(
     throw new HttpError(400, "Missing repository full_name in webhook payload");
   }
 
-  const { repo, job } = await withTransaction(async (client) => {
+  const { repo, job, reason: ignoredReason } = await withTransaction(async (client) => {
     let foundRepo = await apkRepo.getRepositoryBySlug(client, repoSlug);
 
     // Smart Fallback: If exact repoSlug not found, check if repository was moved/renamed
@@ -314,6 +314,26 @@ export async function handleGitHubWebhook(
       throw new HttpError(401, "Invalid webhook signature");
     }
 
+    // If tag_filter_regex is configured, verify that release tag_name matches
+    if (foundRepo.tag_filter_regex && payload.release?.tag_name) {
+      try {
+        const tagRegex = new RegExp(foundRepo.tag_filter_regex, "i");
+        if (!tagRegex.test(payload.release.tag_name)) {
+          logger.info(
+            `[apk.service] Release tag "${payload.release.tag_name}" ignored (does not match tag_filter_regex "${foundRepo.tag_filter_regex}") for repo ${repoSlug}`
+          );
+          return {
+            repo: foundRepo,
+            job: null,
+            ignored: true,
+            reason: `Release tag "${payload.release.tag_name}" ignored by tag_filter_regex`,
+          };
+        }
+      } catch (regexErr) {
+        logger.warn({ err: regexErr }, `[apk.service] Invalid tag_filter_regex "${foundRepo.tag_filter_regex}"`);
+      }
+    }
+
     // Create sync job
     const createdJob = await apkRepo.createSyncJob(client, foundRepo.id, "webhook", {
       tag_name: payload.release?.tag_name,
@@ -321,8 +341,16 @@ export async function handleGitHubWebhook(
       assets_count: payload.release?.assets?.length || 0,
     });
 
-    return { repo: foundRepo, job: createdJob };
+    return { repo: foundRepo, job: createdJob, ignored: false };
   });
+
+  if (!job) {
+    return {
+      ok: true,
+      ignored: true,
+      reason: ignoredReason || "Ignored by repository filter configuration",
+    };
+  }
 
   // Notify worker asynchronously
   notifyWorker({
@@ -332,6 +360,7 @@ export async function handleGitHubWebhook(
     isPrivate: repo.is_private,
     accessToken: repo.access_token,
     assetFilterRegex: repo.asset_filter_regex,
+    tagFilterRegex: repo.tag_filter_regex,
     release: payload.release,
   }).catch((e) => {
     logger.error({ err: e }, "[apk.service] notifyWorker error");
@@ -367,6 +396,7 @@ export async function triggerManualSync(repoId: string) {
     isPrivate: repo.is_private,
     accessToken: repo.access_token,
     assetFilterRegex: repo.asset_filter_regex,
+    tagFilterRegex: repo.tag_filter_regex,
     isManual: true,
   }).catch((e) => {
     logger.error({ err: e }, "[apk.service] notifyWorker manual sync error");

@@ -9,6 +9,7 @@ export const createApkRepositorySchema = z.object({
   access_token: z.string().optional().nullable(),
   webhook_secret: z.string().optional(),
   asset_filter_regex: z.string().default(".*\\.(apk|exe|msi|dmg|pkg|AppImage|deb|zip)$"),
+  tag_filter_regex: z.string().optional().nullable(),
 });
 
 export type SupportedPlatform = "android" | "windows" | "macos" | "linux";
@@ -25,6 +26,7 @@ export const updateApkRepositorySchema = z.object({
   access_token: z.string().optional().nullable(),
   webhook_secret: z.string().optional(),
   asset_filter_regex: z.string().optional(),
+  tag_filter_regex: z.string().optional().nullable(),
 });
 
 export type UpdateApkRepositoryInput = z.infer<typeof updateApkRepositorySchema>;
@@ -36,6 +38,7 @@ export interface ApkRepositoryModel {
   access_token: string | null;
   webhook_secret: string;
   asset_filter_regex: string;
+  tag_filter_regex?: string | null;
   created_at: string;
   updated_at: string;
 }

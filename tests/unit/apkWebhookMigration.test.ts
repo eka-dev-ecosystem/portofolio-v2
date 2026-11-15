@@ -67,6 +67,13 @@ describe("APK Repository Migration & Webhook Handling", () => {
       });
       expect(result.success).toBe(true);
     });
+
+    it("should accept valid tag_filter_regex", () => {
+      const result = updateApkRepositorySchema.safeParse({
+        tag_filter_regex: "^android-",
+      });
+      expect(result.success).toBe(true);
+    });
   });
 
   describe("handleGitHubWebhook smart migration & auto-healing", () => {
@@ -220,6 +227,82 @@ describe("APK Repository Migration & Webhook Handling", () => {
 
       expect(updateRepoSlugSpy).not.toHaveBeenCalled();
       expect(createSyncJobSpy).not.toHaveBeenCalled();
+    });
+
+    it("should ignore webhook gracefully when release tag does not match tag_filter_regex", async () => {
+      const payload = {
+        action: "published",
+        repository: {
+          name: "task-management",
+          full_name: "eka-dev-ecosystem/task-management",
+        },
+        release: {
+          id: 55555,
+          tag_name: "ios-v1.37.3",
+          assets: [{ name: "task-hub-v1.37.3.ipa" }],
+        },
+      };
+
+      const rawBody = JSON.stringify(payload);
+      const signature = createSignature(rawBody, rawSecret);
+
+      vi.spyOn(apkRepo, "getRepositoryBySlug").mockResolvedValueOnce({
+        id: "repo-uuid-task",
+        repo_slug: "eka-dev-ecosystem/task-management",
+        webhook_secret: rawSecret,
+        tag_filter_regex: "^android-",
+      } as any);
+
+      const createSyncJobSpy = vi.spyOn(apkRepo, "createSyncJob");
+
+      const result = await handleGitHubWebhook(rawBody, signature, "release", payload);
+
+      expect(result.ok).toBe(true);
+      expect(result.ignored).toBe(true);
+      expect(result.reason).toContain("ignored by tag_filter_regex");
+      expect(createSyncJobSpy).not.toHaveBeenCalled();
+    });
+
+    it("should process webhook when release tag matches tag_filter_regex", async () => {
+      const payload = {
+        action: "published",
+        repository: {
+          name: "task-management",
+          full_name: "eka-dev-ecosystem/task-management",
+        },
+        release: {
+          id: 66666,
+          tag_name: "android-v1.0.8",
+          assets: [{ name: "app-release.apk" }],
+        },
+      };
+
+      const rawBody = JSON.stringify(payload);
+      const signature = createSignature(rawBody, rawSecret);
+
+      vi.spyOn(apkRepo, "getRepositoryBySlug").mockResolvedValueOnce({
+        id: "repo-uuid-task",
+        repo_slug: "eka-dev-ecosystem/task-management",
+        webhook_secret: rawSecret,
+        tag_filter_regex: "^android-",
+      } as any);
+
+      const createSyncJobSpy = vi.spyOn(apkRepo, "createSyncJob").mockResolvedValueOnce({
+        id: "job-uuid-android",
+        repository_id: "repo-uuid-task",
+        status: "pending",
+      } as any);
+
+      const result = await handleGitHubWebhook(rawBody, signature, "release", payload);
+
+      expect(result.ok).toBe(true);
+      expect(result.job_id).toBe("job-uuid-android");
+      expect(createSyncJobSpy).toHaveBeenCalledWith(
+        mockClient,
+        "repo-uuid-task",
+        "webhook",
+        expect.objectContaining({ tag_name: "android-v1.0.8" })
+      );
     });
 
     it("should ignore non-release webhook events gracefully", async () => {
